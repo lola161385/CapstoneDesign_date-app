@@ -73,7 +73,7 @@ const Tag = styled(motion.span)`
   padding: 6px 14px;
   border-radius: 999px;
   background: rgba(46, 125, 50, 0.1);
-  color: #2e7d32;
+  color: #6dab71;
   font-size: 13px;
   margin: 4px;
 `;
