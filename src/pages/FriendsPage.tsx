@@ -27,8 +27,8 @@ const FRIENDS = [
     lastSeen: '방금 전',
     age: 24,
     mbti: 'ENTJ',
-    tagline: '노는게 제일 좋아~',
-    intro: '안녕하세요! 전 커피와 케이크를 사랑하는 컴공남남에요...',
+    tagline: ' 오류 이제 그만 ',
+    intro: '안녕하세요! 전 커피와 케이크를 사랑하는...(더보기)',
   },
   {
     id: 2,
