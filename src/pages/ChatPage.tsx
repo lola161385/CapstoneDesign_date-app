@@ -43,7 +43,7 @@ const FRIENDS_MAP: Record<string, string> = {
   '1': '또컴공이야',
   '2': '라이언',
   '3': '어피치',
-  '4': '무지',
+  '4': '무지', 
 };
 const MY_NAME = '배고픈 춘식이';
 
