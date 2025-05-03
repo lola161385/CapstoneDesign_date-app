@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Chip, IconButton, Avatar, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, FormHelperText, CircularProgress } from '@mui/material';
-import styled from 'styled-components';
+import React, { useState, useRef } from 'react';
+import { Box, Typography, TextField, Button, Chip, IconButton, Avatar, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, FormHelperText, CircularProgress, Paper, useTheme } from '@mui/material';
+import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 const PageContainer = styled(Box)`
   display: flex;
@@ -68,6 +69,17 @@ const PhotoUpload = styled(Box)`
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  padding: 24px;
+  border: 2px dashed ${({ theme }) =>
+    theme.palette.mode === 'light' ? '#2196f3' : '#64b5f6'};
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${({ theme }) =>
+      theme.palette.mode === 'light' ? 'rgba(33,150,243,0.1)' : 'rgba(100,181,246,0.1)'};
+  }
 `;
 
 const PhotoPreview = styled(Box)`
@@ -264,6 +276,7 @@ const circleSizes = [24, 20, 16, 12, 16, 20, 24];
 
 const IntroFormPage: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     nickname: '',
@@ -289,6 +302,7 @@ const IntroFormPage: React.FC = () => {
   const [loadingTags, setLoadingTags] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [showTagLimitWarning, setShowTagLimitWarning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const availableTags = [
     '긍정적', '독창적', '무계획', '열정적', '포용적',
@@ -514,6 +528,7 @@ const IntroFormPage: React.FC = () => {
               accept="image/*"
               style={{ display: 'none' }}
               onChange={handlePhotoChange}
+              ref={fileInputRef}
             />
             <label htmlFor="photo-upload">
               <PhotoPreview>

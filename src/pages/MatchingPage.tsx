@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import {
   Box,
   Typography,
@@ -11,52 +11,83 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  useTheme,
 } from '@mui/material';
+import { Theme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useColorMode } from '../contexts/ColorModeContext';
+
+interface Profile {
+  id: number;
+  name: string;
+  age: number;
+  mbti: string;
+  nickname: string;
+  tags: string[];
+  description: string;
+}
+
+interface OverlayIconProps {
+  right?: boolean;
+  theme?: Theme;
+}
 
 /* -------- styled components -------- */
-const PageContainer = styled(Box)`
+const PageContainer = styled('div')`
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
   padding: 24px;
   gap: 24px;
-  background: ${({ theme }) =>
+  background: ${({ theme }: { theme: Theme }) =>
     theme.palette.mode === 'light'
       ? 'linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%)'
       : 'linear-gradient(135deg,#1a1a1a 0%,#2d3436 100%)'};
 `;
 
-const MainContent = styled(Box)`
+const Header = styled('div')`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+`;
+
+const MainContent = styled('div')`
   flex: 1;
   width: 90vw;
   max-width: 430px;
   margin: 0 auto;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
-const MatchingCard = styled(motion.div)`
-  position: absolute;
+const StyledMatchingCard = styled(motion.div)`
+  position: relative;
   width: 100%;
   max-width: 380px;
-  background: ${({ theme }) =>
+  background: ${({ theme }: { theme: Theme }) =>
     theme.palette.mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(45,45,45,0.9)'};
   backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 32px 24px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
   touch-action: none;
+  margin: 0 auto;
 `;
 
-const OverlayIcon = styled(motion.div)`
+const OverlayIcon = styled(motion.div)<{ right?: boolean }>`
   position: absolute;
   top: 20px;
-  ${(props: { right?: boolean }) => (props.right ? 'right: 20px;' : 'left: 20px;')}
+  ${({ right }) => (right ? 'right: 20px;' : 'left: 20px;')};
   font-size: 64px;
   color: ${({ right }) => (right ? '#e91e63' : '#f44336')};
   pointer-events: none;
@@ -68,26 +99,44 @@ const StyledAvatar = styled(Avatar)`
   margin: 0 auto 20px;
 `;
 
-const Tag = styled(motion.span)`
+const StyledTag = styled(motion.span)`
   display: inline-block;
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(46, 125, 50, 0.1);
-  color: #6dab71;
+  background: ${({ theme }: { theme: Theme }) => 
+    theme.palette.mode === 'light' 
+      ? 'rgba(46, 125, 50, 0.1)' 
+      : 'rgba(46, 125, 50, 0.2)'};
+  color: ${({ theme }: { theme: Theme }) => 
+    theme.palette.mode === 'light' 
+      ? '#2e7d32' 
+      : '#81c784'};
   font-size: 13px;
   margin: 4px;
 `;
 
-const ActionButton = styled(IconButton)`
+const StyledActionButton = styled(IconButton)`
   width: 60px;
   height: 60px;
-  background: rgba(255,255,255,0.9);
+  background: ${({ theme }: { theme: Theme }) =>
+    theme.palette.mode === 'light' 
+      ? 'rgba(255,255,255,0.9)' 
+      : 'rgba(66,66,66,0.9)'};
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  
+  &:hover {
+    background: ${({ theme }: { theme: Theme }) =>
+      theme.palette.mode === 'light' 
+        ? 'rgba(255,255,255,1)' 
+        : 'rgba(66,66,66,1)'};
+  }
 `;
 
 /* -------- component -------- */
 const MatchingPage: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const { toggleColorMode } = useColorMode();
   const [index, setIndex] = useState(0);
   const [exitX, setExitX] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
@@ -156,68 +205,82 @@ const MatchingPage: React.FC = () => {
     navigate(`/chat/${profile.id}`);
   };
 
+  const renderCard = () => (
+    <StyledMatchingCard
+      {...swipeHandlers}
+      key={index}
+      className="matching-card"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1, x: 0 }}
+      exit={{ x: exitX, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* overlay icons */}
+      <OverlayIcon
+        right
+        initial={{ opacity: 0 }}
+        animate={{ opacity: exitX > 0 ? 0.8 : 0 }}
+      >
+        <FavoriteIcon fontSize="inherit" />
+      </OverlayIcon>
+      <OverlayIcon
+        initial={{ opacity: 0 }}
+        animate={{ opacity: exitX < 0 ? 0.8 : 0 }}
+      >
+        <CloseIcon fontSize="inherit" />
+      </OverlayIcon>
+
+      <StyledAvatar>
+        <PersonIcon fontSize="large" />
+      </StyledAvatar>
+      <Typography variant="h6" fontWeight={600} textAlign="center">
+        {profile.name}
+      </Typography>
+      <Typography variant="subtitle2" textAlign="center" color="text.secondary">
+        만 {profile.age} · {profile.mbti}
+      </Typography>
+      <Typography variant="body2" textAlign="center" gutterBottom>
+        {profile.nickname}
+      </Typography>
+      <Box textAlign="center" mb={1}>
+        {profile.tags.map((t, i) => (
+          <StyledTag 
+            key={t} 
+            initial={{ opacity: 0, y: 6 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: i * 0.1 }}
+          >
+            #{t}
+          </StyledTag>
+        ))}
+      </Box>
+      <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
+        {profile.description}
+      </Typography>
+
+      {/* action buttons */}
+      <Box display="flex" justifyContent="center" gap={4} mt={3}>
+        <StyledActionButton onClick={handleDislike}>
+          <CloseIcon />
+        </StyledActionButton>
+        <StyledActionButton onClick={handleLike}>
+          <FavoriteIcon color="error" />
+        </StyledActionButton>
+      </Box>
+    </StyledMatchingCard>
+  );
+
   return (
     <PageContainer>
-      <Typography variant="h4" fontWeight={700}>매칭하기</Typography>
+      <Header>
+        <Typography variant="h4" fontWeight={700}>매칭하기</Typography>
+        <IconButton onClick={toggleColorMode} color="inherit">
+          {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
+      </Header>
       <MainContent>
         <AnimatePresence mode="wait">
-          <MatchingCard
-            {...swipeHandlers}
-            key={index}
-            className="matching-card"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1, x: 0 }}
-            exit={{ x: exitX, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* overlay icons */}
-            <OverlayIcon
-              right
-              initial={{ opacity: 0 }}
-              animate={{ opacity: exitX > 0 ? 0.8 : 0 }}
-            >
-              <FavoriteIcon fontSize="inherit" />
-            </OverlayIcon>
-            <OverlayIcon
-              initial={{ opacity: 0 }}
-              animate={{ opacity: exitX < 0 ? 0.8 : 0 }}
-            >
-              <CloseIcon fontSize="inherit" />
-            </OverlayIcon>
-
-            <StyledAvatar>
-              <PersonIcon fontSize="large" />
-            </StyledAvatar>
-            <Typography variant="h6" fontWeight={600} textAlign="center">
-              {profile.name}
-            </Typography>
-            <Typography variant="subtitle2" textAlign="center" color="text.secondary">
-              만 {profile.age} · {profile.mbti}
-            </Typography>
-            <Typography variant="body2" textAlign="center" gutterBottom>
-              {profile.nickname}
-            </Typography>
-            <Box textAlign="center" mb={1}>
-              {profile.tags.map((t, i) => (
-                <Tag key={t} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                  #{t}
-                </Tag>
-              ))}
-            </Box>
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
-              {profile.description}
-            </Typography>
-
-            {/* action buttons */}
-            <Box display="flex" justifyContent="center" gap={4} mt={3}>
-              <ActionButton onClick={handleDislike}>
-                <CloseIcon />
-              </ActionButton>
-              <ActionButton onClick={handleLike}>
-                <FavoriteIcon color="error" />
-              </ActionButton>
-            </Box>
-          </MatchingCard>
+          {renderCard()}
         </AnimatePresence>
       </MainContent>
 

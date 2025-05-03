@@ -1,6 +1,15 @@
 import React from 'react';
-import { Box, Typography, Avatar, Chip, IconButton } from '@mui/material';
-import styled from 'styled-components';
+import { useParams } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Avatar,
+  Button,
+  useTheme,
+  Chip,
+  IconButton,
+} from '@mui/material';
+import styled from '@emotion/styled';
 import EditIcon from '@mui/icons-material/Edit';
 import PersonIcon from '@mui/icons-material/Person';
 
@@ -8,13 +17,12 @@ const PageContainer = styled(Box)`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
   padding: 24px;
   gap: 24px;
   background: ${({ theme }) =>
     theme.palette.mode === 'light'
-      ? 'linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%)'
-      : 'linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%)'};
+      ? 'linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%)'
+      : 'linear-gradient(135deg,#1a1a1a 0%,#2d3436 100%)'};
 
   @media (max-width: 430px) {
     padding: 16px;
@@ -22,24 +30,17 @@ const PageContainer = styled(Box)`
   }
 `;
 
-const MainContent = styled(Box)`
+const ProfileContainer = styled(Box)`
   flex: 1;
-  width: 90vw;
-  max-width: 430px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
   background: ${({ theme }) =>
-    theme.palette.mode === 'light'
-      ? 'rgba(255, 255, 255, 0.8)'
-      : 'rgba(45, 45, 45, 0.8)'};
+    theme.palette.mode === 'light' ? 'rgba(255,255,255,0.8)' : 'rgba(45,45,45,0.8)'};
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 24px;
-  overflow-y: auto;
-
-  @media (max-width: 430px) {
-    width: 100%;
-    padding: 20px;
-  }
 `;
 
 const ProfileHeader = styled(Box)`
@@ -78,7 +79,30 @@ const TagContainer = styled(Box)`
   margin: 16px 0;
 `;
 
+const ProfileContent = styled(Box)`
+  flex: 1;
+  width: 90vw;
+  max-width: 430px;
+  margin: 0 auto;
+  background: ${({ theme }) =>
+    theme.palette.mode === 'light'
+      ? 'rgba(255, 255, 255, 0.8)'
+      : 'rgba(45, 45, 45, 0.8)'};
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 24px;
+  overflow-y: auto;
+
+  @media (max-width: 430px) {
+    width: 100%;
+    padding: 20px;
+  }
+`;
+
 const ProfilePage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const theme = useTheme();
+
   const userProfile = {
     name: "배고픈 춘식이",
     nickname: "HHHLL",
@@ -110,7 +134,7 @@ const ProfilePage: React.FC = () => {
         </IconButton>
       </Box>
 
-      <MainContent>
+      <ProfileContent>
         <ProfileHeader>
           <StyledAvatar>
             <PersonIcon />
@@ -196,7 +220,7 @@ const ProfilePage: React.FC = () => {
         >
           {userProfile.description}
         </Typography>
-      </MainContent>
+      </ProfileContent>
     </PageContainer>
   );
 };

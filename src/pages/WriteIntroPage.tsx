@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import styled from 'styled-components';
+import { Box, Typography, Button, useTheme } from '@mui/material';
+import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
+import { Theme } from '@mui/material/styles';
 
 const PageContainer = styled(Box)`
   display: flex;
@@ -76,6 +77,7 @@ const StyledButton = styled(Button)`
 
 const WriteIntroPage: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   return (
     <PageContainer>
@@ -83,7 +85,7 @@ const WriteIntroPage: React.FC = () => {
         variant="h4"
         component="h1"
         sx={{
-          color: theme => theme.palette.mode === 'light' ? '#1a1a1a' : '#ffffff',
+          color: theme.palette.mode === 'light' ? '#1a1a1a' : '#ffffff',
           fontWeight: 600,
         }}
       >
@@ -95,7 +97,7 @@ const WriteIntroPage: React.FC = () => {
           <Typography
             variant="h5"
             sx={{
-              color: theme => theme.palette.mode === 'light' ? '#1a1a1a' : '#ffffff',
+              color: theme.palette.mode === 'light' ? '#1a1a1a' : '#ffffff',
               fontWeight: 500,
               mb: 2,
             }}
@@ -105,7 +107,7 @@ const WriteIntroPage: React.FC = () => {
           <Typography
             variant="body1"
             sx={{
-              color: theme => theme.palette.mode === 'light' ? '#666666' : '#cccccc',
+              color: theme.palette.mode === 'light' ? '#666666' : '#cccccc',
               maxWidth: '400px',
             }}
           >

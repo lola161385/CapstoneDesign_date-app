@@ -1,28 +1,14 @@
-import { createTheme, Theme } from '@mui/material/styles';
-import { DefaultTheme } from 'styled-components';
-
-// styled-components의 DefaultTheme 확장
-declare module 'styled-components' {
-  export interface DefaultTheme extends Theme {}
-}
+import { createTheme, Theme as MuiTheme } from '@mui/material/styles';
 
 // Material-UI 테마 생성
 export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2196f3',
-      light: '#64b5f6',
-      dark: '#1976d2',
+      main: '#1976d2',
     },
     secondary: {
-      main: '#f50057',
-      light: '#ff4081',
-      dark: '#c51162',
-    },
-    background: {
-      default: '#f5f7fa',
-      paper: '#ffffff',
+      main: '#dc004e',
     },
   },
   typography: {
@@ -76,4 +62,8 @@ export const theme = createTheme({
       },
     },
   },
-}); 
+});
+
+declare module '@emotion/react' {
+  export interface Theme extends MuiTheme {}
+} 
