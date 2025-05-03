@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -19,27 +20,14 @@ const PageContainer = styled(Box)`
     padding: 24px;
     gap: 24px;
     background: ${({ theme }) =>
-            theme.palette.mode === 'light'
-                    ? 'linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%)'
-                    : 'linear-gradient(135deg,#1a1a1a 0%,#2d3436 100%)'};
+    theme.palette.mode === 'light'
+        ? 'linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%)'
+        : 'linear-gradient(135deg,#1a1a1a 0%,#2d3436 100%)'};
 
     @media (max-width: 430px) {
         padding: 16px;
         gap: 16px;
     }
-`;
-
-const ProfileContainer = styled(Box)`
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    padding: 24px;
-    background: ${({ theme }) =>
-            theme.palette.mode === 'light' ? 'rgba(255,255,255,0.8)' : 'rgba(45,45,45,0.8)'};
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
 `;
 
 const ProfileHeader = styled(Box)`
@@ -55,18 +43,18 @@ const StyledAvatar = styled(Avatar)`
     height: 120px;
     margin-bottom: 8px;
     background-color: ${({ theme }) =>
-            theme.palette.mode === 'light' ? '#f0f0f0' : '#2d2d2d'};
+    theme.palette.mode === 'light' ? '#f0f0f0' : '#2d2d2d'};
     border: 4px solid ${({ theme }) =>
-            theme.palette.mode === 'light'
-                    ? 'rgba(255, 255, 255, 0.8)'
-                    : 'rgba(255, 255, 255, 0.1)'};
+    theme.palette.mode === 'light'
+        ? 'rgba(255, 255, 255, 0.8)'
+        : 'rgba(255, 255, 255, 0.1)'};
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 
     svg {
         width: 60%;
         height: 60%;
         color: ${({ theme }) =>
-                theme.palette.mode === 'light' ? '#666' : '#999'};
+    theme.palette.mode === 'light' ? '#666' : '#999'};
     }
 `;
 
@@ -84,9 +72,9 @@ const ProfileContent = styled(Box)`
     max-width: 430px;
     margin: 0 auto;
     background: ${({ theme }) =>
-            theme.palette.mode === 'light'
-                    ? 'rgba(255, 255, 255, 0.8)'
-                    : 'rgba(45, 45, 45, 0.8)'};
+    theme.palette.mode === 'light'
+        ? 'rgba(255, 255, 255, 0.8)'
+        : 'rgba(45, 45, 45, 0.8)'};
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 24px;
@@ -111,19 +99,34 @@ const ProfilePage: React.FC = () => {
         tags: ["긍정적", "독창적", "무계획"],
         description: "명확한 비전과 논리적인 사고를 바탕으로 전략을 세우고, 효율적으로 실행하는 것을 좋아합니다."
     }; */
-    const [userProfile, setUserProfile] = useState({
+    interface UserProfile {
+        name: string;
+        nickname: string;
+        age: string;
+        mbti: string;
+        tags: string[];
+        description: string;
+        profileImage?: string;
+    }
+
+    const [userProfile, setUserProfile] = useState<UserProfile>({
         name: '',
         nickname: '',
         age: '',
         mbti: '',
         tags: [],
         description: '',
+        profileImage: '',
     });
 
     useEffect(() => {
-        const storedProfile = localStorage.getItem('userProfile');
-        if (storedProfile) {
-            setUserProfile(JSON.parse(storedProfile));
+        try {
+            const storedProfile = localStorage.getItem('userProfile');
+            if (storedProfile) {
+                setUserProfile(JSON.parse(storedProfile));
+            }
+        } catch (error) {
+            console.error('프로필 로드 실패:', error);
         }
     }, []);
 
