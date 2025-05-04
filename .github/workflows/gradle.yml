@@ -1,0 +1,81 @@
+name: Java CI/CD with Gradle
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 1. src/main/resources에 JSON 복원
+      - name: Restore firebase config
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.FIREBASE_JSON }}" | base64 -d > src/main/resources/firebase-service-account.json
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      # 2. app.jar + JSON 복사 (필요시)
+      - name: Deploy JAR and config
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          source: "build/libs/app.jar"
+          target: "/home/ubuntu/app/"
+
+      # 3. 서버 재시작
+      - name: Restart Application
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd /home/ubuntu/app/build/libs
+            echo "=== Stopping existing app ==="
+            PID=$(jps -l | grep 'app.jar' | awk '{print $1}')
+            if [ ! -z "$PID" ]; then
+              echo "Killing PID: $PID"
+              kill -9 $PID
+            fi
+            sleep 2
+            echo "=== Starting new app ==="
+            # 환경변수 주입 (추가)
+            export FIREBASE_SERVICE_ACCOUNT_KEY="${{ secrets.FIREBASE_JSON }}"
+            nohup java -jar app.jar > app.log 2>&1 & disown
+            sleep 5
+            echo "=== Process status ==="
+            jps -ml
+            echo "=== Recent logs ==="
+            tail -n 20 app.log
+
+    # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
+    # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
+    #
+    # - name: Setup Gradle
+    #   uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+    #   with:
+    #     gradle-version: '8.9'
+    #
+    # - name: Build with Gradle 8.9
+    #   run: gradle build

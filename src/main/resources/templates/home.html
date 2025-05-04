@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>홈</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+<h2>홈페이지</h2>
+
+<div id="message"></div>
+
+<div id="profile-section" style="display:none;">
+    <h3>프로필 정보</h3>
+    <p>이메일: <span id="userEmail"></span></p>
+    <p>이름: <span id="name"></span></p>
+    <p>성별: <span id="gender"></span></p>
+    <p>나이: <span id="birthdate"></span></p>
+    <p>자기소개: <span id="bio"></span></p>
+    <p>MBTI: <span id="mbti"></span></p>
+    <p>성격 태그: <span id="tags"></span></p>
+</div>
+
+<a href="/logout" id="logout-link">로그아웃</a>
+<a href="/profile"><button type="button">프로필 페이지로 이동</button></a>
+<button type="button" id="delete-account" style="margin-top: 1rem;">회원탈퇴</button>
+
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_fS_I_g0jicSPKLqBxF8if2ffnDKrvNM",
+        authDomain: "date-app-41a1c.firebaseapp.com",
+        projectId: "date-app-41a1c",
+        storageBucket: "date-app-41a1c.firebasestorage.app",
+        messagingSenderId: "950558236414",
+        appId: "1:950558236414:web:f65dad635607345aa8cfaf",
+        measurementId: "G-EBTEFW9PDH"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    document.getElementById('delete-account').addEventListener('click', async function() {
+        if (!confirm('정말 탈퇴하시겠습니까? 탈퇴하면 복구할 수 없습니다.')) {
+            return;
+        }
+
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('로그인이 필요합니다.');
+                location.replace('/login');
+                return;
+            }
+
+            const uid = user.uid;
+
+            // ✅ 1. Realtime Database에서 사용자 데이터 삭제
+            await database.ref('users/' + uid).remove();
+            console.log("🗑️ Realtime Database 사용자 데이터 삭제 완료");
+
+            // ✅ 2. Firebase Authentication에서 계정 삭제
+            await user.delete();
+            console.log("✅ Firebase Authentication 사용자 삭제 완료");
+
+            alert('✅ 회원탈퇴가 완료되었습니다.');
+            location.replace('/login');
+        } catch (error) {
+            console.error('회원탈퇴 실패:', error);
+
+            if (error.code === 'auth/requires-recent-login') {
+                alert('❗ 최근 인증이 필요합니다. 다시 로그인 후 탈퇴해주세요.');
+                await auth.signOut();
+                location.replace('/login');
+            } else {
+                alert('회원탈퇴 중 오류가 발생했습니다: ' + (error.message || ''));
+            }
+        }
+    });
+
+    const token = localStorage.getItem('jwtToken');
+
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        fetch('/api/home', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('인증 실패. 다시 로그인하세요.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('profile-section').style.display = 'block';
+                document.getElementById('userEmail').textContent = data.userEmail;
+                if (data.profile) {
+                    document.getElementById('name').textContent = data.profile.name || '';
+                    document.getElementById('gender').textContent = data.profile.gender || '';
+                    const rawBirthdate = data.profile.birthdate || '';
+                    const age = rawBirthdate ? calculateKoreanAge(rawBirthdate) : '-';
+                    document.getElementById('birthdate').textContent = '만 ' + age + '세';
+                    document.getElementById('bio').textContent = data.profile.bio || '';
+
+                    const personality = data.profile.personality || {};
+                    document.getElementById('mbti').textContent = personality.mbti || '-';
+                    document.getElementById('tags').textContent = (personality.tags || []).join(', ');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                localStorage.removeItem('jwtToken');
+                window.location.href = '/login';
+            });
+    }
+
+    document.getElementById('logout-link').addEventListener('click', function() {
+        localStorage.removeItem('jwtToken');
+    });
+
+    function calculateKoreanAge(birthdateStr) {
+        const today = new Date();
+        const birthDate = new Date(birthdateStr);
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+
+        const isBirthdayPassed =
+            today.getMonth() > birthDate.getMonth() ||
+            (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+
+        if (!isBirthdayPassed) {
+            age--;
+        }
+
+        return age;
+    }
+
+</script>
+</body>
+</html>

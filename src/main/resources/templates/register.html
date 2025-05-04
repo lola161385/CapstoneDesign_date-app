@@ -1,0 +1,74 @@
+<!-- templates/register.html -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Firebase 회원가입</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+<h2>Firebase 회원가입</h2>
+
+<form id="register-form">
+    <input type="email" id="email" name="email" placeholder="이메일" required>
+    <input type="password" id="password" name="password" placeholder="비밀번호" required>
+    <button type="submit">회원가입</button>
+</form>
+
+<!-- 메시지를 보여줄 영역 -->
+<p id="message" style="color: red;"></p>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_fS_I_g0jicSPKLqBxF8if2ffnDKrvNM",
+        authDomain: "date-app-41a1c.firebaseapp.com",
+        projectId: "date-app-41a1c",
+        storageBucket: "date-app-41a1c.firebasestorage.app",
+        messagingSenderId: "950558236414",
+        appId: "1:950558236414:web:f65dad635607345aa8cfaf",
+        measurementId: "G-EBTEFW9PDH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // ✅ 비밀번호 복잡성 검사 함수
+    function isPasswordComplex(password) {
+        const pattern = /^(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        return pattern.test(password);
+    }
+
+    // ✅ 회원가입 처리
+    document.getElementById('register-form').addEventListener('submit', async function(event) {
+        event.preventDefault(); // 서버 form submit 막기
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageElement = document.getElementById('message');
+
+        // 비밀번호 복잡성 체크
+        if (!isPasswordComplex(password)) {
+            messageElement.textContent = "❌ 비밀번호는 8자 이상, 영소문자 1개, 숫자 1개, 특수문자 1개를 포함해야 합니다.";
+            return;
+        }
+
+        try {
+            // Firebase 회원가입
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            // 이메일 인증 메일 보내기
+            await user.sendEmailVerification();
+
+            alert('✅ 회원가입 완료! 이메일을 확인하고 인증을 완료해주세요.');
+            location.replace('/login');
+        } catch (error) {
+            console.error('회원가입 실패:', error);
+            messageElement.textContent = "❌ " + (error.message || '회원가입 중 오류 발생');
+        }
+    });
+</script>
+
+</body>
+</html>

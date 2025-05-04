@@ -1,0 +1,106 @@
+
+<!--templates/login.html-->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+<h2>Login</h2>
+<form id="login-form">
+    <label for="email">Email:</label>
+    <input type="email" id="email" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" required>
+    <br>
+    <button type="submit">Login</button>
+</form>
+
+<p><a href="#" id="reset-password-link">비밀번호를 잊으셨나요?</a></p>
+<p>계정이 없으신가요? <a href="/register">회원가입</a></p>
+
+<p id="message" style="color: red;"></p>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_fS_I_g0jicSPKLqBxF8if2ffnDKrvNM",
+        authDomain: "date-app-41a1c.firebaseapp.com",
+        projectId: "date-app-41a1c",
+        storageBucket: "date-app-41a1c.firebasestorage.app",
+        messagingSenderId: "950558236414",
+        appId: "1:950558236414:web:f65dad635607345aa8cfaf",
+        measurementId: "G-EBTEFW9PDH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById('login-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageElement = document.getElementById('message');
+
+        try {
+            console.log("📨 로그인 시도 중... 이메일:", email);
+
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            // ✅ 이메일 인증 여부 확인
+            if (!user.emailVerified) {
+                await auth.signOut(); // 인증 안된 유저는 강제 로그아웃
+                messageElement.textContent = "❌ 이메일 인증이 완료되지 않았습니다. 이메일을 확인해주세요.";
+                return;
+            }
+
+            console.log("✅ Firebase 로그인 성공:", user.email);
+
+            const idToken = await user.getIdToken();
+            console.log("🪪 ID 토큰 획득 성공:", idToken.substring(0, 20) + "...");
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({idToken: idToken}),
+                credentials: 'include' // 쿠키를 함께 보낸다 (만약 필요한 경우)
+            });
+
+            if (!response.ok) {
+                const errorMsg = await response.text();
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            const token = data.token;
+            localStorage.setItem('jwtToken', token);
+
+            location.replace('/home');
+
+        } catch (error) {
+            console.error('로그인 실패:', error);
+            messageElement.textContent = "❌ 로그인 실패: " + (error.message || '오류 발생');
+        }
+    });
+
+    document.getElementById('reset-password-link').addEventListener('click', function () {
+        const email = prompt("비밀번호 재설정 메일을 받을 이메일을 입력하세요:");
+        if (!email) return;
+
+        firebase.auth().sendPasswordResetEmail(email)
+            .then(() => {
+                alert("✅ 비밀번호 재설정 이메일을 보냈습니다. 이메일을 확인해주세요.");
+            })
+            .catch(error => {
+                console.error("❌ 비밀번호 재설정 실패:", error);
+                alert("❌ " + (error.message || "비밀번호 재설정 중 오류 발생"));
+            });
+    });
+</script>
+</body>
+</html>
