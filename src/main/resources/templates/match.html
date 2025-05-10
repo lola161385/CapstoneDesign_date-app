@@ -74,11 +74,12 @@
               card.className = 'card';
 
               card.innerHTML = `
-      <h3>${user.name} (${user.mbti})</h3>
-      <p>공통 태그: ${user.commonTags.map(tag => `<span class="tag">${tag}</span>`).join('')}</p>
-      <p>매칭 점수: <strong>${user.score}</strong></p>
-      <button class="button" onclick="alert('💌 기능 준비 중입니다')">요청 보내기</button>
-    `;
+                <h3>${user.name} (${user.mbti})</h3>
+                <p>공통 태그: ${user.commonTags.map(tag => `<span class="tag">${tag}</span>`).join('')}</p>
+                <p>매칭 점수: <strong>${user.score}</strong></p>
+                <button class="button" onclick="startChat('${user.email}')">채팅 시작</button>
+               ` ;
+
 
               container.appendChild(card);
             });
@@ -87,7 +88,10 @@
             console.error("매칭 추천 에러:", err);
             alert("추천 데이터를 불러오는 중 오류가 발생했습니다.");
           });
-
+  function startChat(targetEmail) {
+    const encoded = encodeURIComponent(targetEmail);
+    window.location.href = `/chat/room?with=${encoded}`;
+  }
 </script>
 </body>
 </html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>채팅 목록</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+  <style>
+    .chat-item {
+      border-bottom: 1px solid #ccc;
+      padding: 0.8rem 0;
+    }
+    .chat-item h3 {
+      margin: 0;
+    }
+    .unread {
+      font-weight: bold;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+<h2>내 채팅 목록</h2>
+<div id="chat-list"></div>
+<br>
+<a href="/home"><button>홈으로</button></a>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_fS_I_g0jicSPKLqBxF8if2ffnDKrvNM",
+    authDomain: "date-app-41a1c.firebaseapp.com",
+    projectId: "date-app-41a1c",
+    storageBucket: "date-app-41a1c.appspot.com",
+    messagingSenderId: "950558236414",
+    appId: "1:950558236414:web:f65dad635607345aa8cfaf"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const db = firebase.database();
+  const auth = firebase.auth();
+  const chatListDiv = document.getElementById("chat-list");
+
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      location.href = "/login";
+      return;
+    }
+
+    const userEmail = user.email;
+    const safeEmail = sanitizeEmail(userEmail);  // 안전한 키 생성
+
+    function sanitizeEmail(email) {
+      return email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+    }
+
+    const listRef = db.ref("chat_list/" + safeEmail);  // 수정됨
+
+    listRef.orderByChild("timestamp").on("value", function(snapshot) {
+      chatListDiv.innerHTML = "";
+      const data = snapshot.val();
+
+      if (!data) {
+        chatListDiv.innerHTML = "<p>채팅 내역이 없습니다.</p>";
+        return;
+      }
+
+      const entries = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+      entries.forEach(([roomId, info]) => {
+        const unread = info.unreadCount > 0 ? `<span class="unread">[${info.unreadCount}]</span>` : "";
+        const lastMsg = info.lastMessage || "메시지 없음";
+        const withEmail = info.with;
+
+        const div = document.createElement("div");
+        div.className = "chat-item";
+        div.innerHTML = `
+        <h3>${withEmail} ${unread}</h3>
+        <p>${lastMsg}</p>
+        <button onclick="goToChat('${withEmail}')">채팅방 입장</button>
+      `;
+        chatListDiv.appendChild(div);
+      });
+    });
+  });
+
+
+  function goToChat(withUser) {
+    const encoded = encodeURIComponent(withUser);
+    window.location.href = `/chat/room?with=${encoded}`;
+  }
+</script>
+</body>
+</html>

@@ -26,7 +26,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // 개발용 임시 허용 (React 전환 시 수정 예정)
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/api/login", "/home", "/profile", "/profile/edit", "/match").permitAll()
+                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/api/login", "/home", "/profile", "/profile/edit", "/match", "/chat/**").permitAll()
                         // React 전환 시 수정 예정: .requestMatchers("/api/login", "/api/register", "/api/public/**").permitAll()
                         .anyRequest().authenticated()
                 )

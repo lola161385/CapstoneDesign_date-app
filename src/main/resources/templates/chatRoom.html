@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>채팅방</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+  <style>
+    #chat-log {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .mine { text-align: right; color: blue; }
+    .theirs { text-align: left; color: green; }
+  </style>
+</head>
+<body>
+<h2>채팅방</h2>
+<div id="chat-log"></div>
+<input type="text" id="chat-input" placeholder="메시지 입력..." />
+<button onclick="sendMessage()">보내기</button>
+<br><br>
+<a href="/chat/list"><button>목록으로</button></a>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_fS_I_g0jicSPKLqBxF8if2ffnDKrvNM",
+    authDomain: "date-app-41a1c.firebaseapp.com",
+    projectId: "date-app-41a1c",
+    storageBucket: "date-app-41a1c.appspot.com",
+    messagingSenderId: "950558236414",
+    appId: "1:950558236414:web:f65dad635607345aa8cfaf"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const withUser = urlParams.get('with');
+
+  let currentUserEmail = null;
+  let roomId = null;
+
+  function sanitizeEmail(email) {
+    return email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+  }
+
+  function generateRoomId(email1, email2) {
+    return [sanitizeEmail(email1), sanitizeEmail(email2)].sort().join("_");
+  }
+
+  auth.onAuthStateChanged(function(user) {
+    if (user) {
+      currentUserEmail = user.email;
+      const safeCurrentEmail = sanitizeEmail(currentUserEmail);
+      const safeWithEmail = sanitizeEmail(withUser);
+
+      roomId = generateRoomId(currentUserEmail, withUser);
+      listenForMessages(roomId);
+      markAllAsRead(roomId, safeCurrentEmail);
+    } else {
+      alert("로그인이 필요합니다.");
+      location.href = "/login";
+    }
+  });
+
+  window.sendMessage = function() {
+    const input = document.getElementById("chat-input");
+    const text = input.value.trim();
+    if (!text || !roomId) return;
+
+    const timestamp = Date.now();
+    const message = {
+      sender: currentUserEmail,
+      receiver: withUser,
+      text: text,
+      timestamp: timestamp,
+      read: false
+    };
+
+    db.ref("chats/" + roomId + "/messages").push(message);
+
+    const safeCurrentEmail = sanitizeEmail(currentUserEmail);
+    const safeWithEmail = sanitizeEmail(withUser);
+
+    db.ref("chat_list/" + safeWithEmail + "/" + roomId).once("value").then(snapshot => {
+      const prev = snapshot.val();
+      const unread = (prev && prev.unreadCount) ? prev.unreadCount + 1 : 1;
+
+      db.ref("chat_list/" + safeWithEmail + "/" + roomId).set({
+        lastMessage: text,
+        timestamp: timestamp,
+        unreadCount: unread,
+        with: currentUserEmail
+      });
+    });
+
+    db.ref("chat_list/" + safeCurrentEmail + "/" + roomId).set({
+      lastMessage: text,
+      timestamp: timestamp,
+      unreadCount: 0,
+      with: withUser
+    });
+
+    input.value = "";
+  };
+
+  function listenForMessages(roomId) {
+    const chatLog = document.getElementById("chat-log");
+    const messagesRef = db.ref("chats/" + roomId + "/messages");
+
+    messagesRef.on("child_added", function(snapshot) {
+      const msg = snapshot.val();
+      const div = document.createElement("div");
+
+      div.className = (msg.sender === currentUserEmail) ? "mine" : "theirs";
+      div.innerHTML = `<span>${msg.text}</span>`;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      if (msg.receiver === currentUserEmail && !msg.read) {
+        db.ref("chats/" + roomId + "/messages/" + snapshot.key + "/read").set(true);
+      }
+    });
+  }
+
+  function markAllAsRead(roomId, safeCurrentEmail) {
+    const messagesRef = db.ref("chats/" + roomId + "/messages");
+
+    messagesRef.once("value", function(snapshot) {
+      snapshot.forEach(function(child) {
+        const msg = child.val();
+        if (msg.receiver === currentUserEmail && !msg.read) {
+          db.ref("chats/" + roomId + "/messages/" + child.key + "/read").set(true);
+        }
+      });
+    });
+
+    db.ref("chat_list/" + safeCurrentEmail + "/" + roomId + "/unreadCount").set(0);
+  }
+</script>
+</body>
+</html>
